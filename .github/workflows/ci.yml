@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+
+env:
+  IMAGE_NAME: cowsay
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and push image
+        run: |
+          IMAGE="${{ secrets.ARTIFACT_REGISTRY_URL }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
+
+      - name: Update kustomization image tags
+        run: |
+          sed -i "s|newTag:.*|newTag: ${{ github.sha }}|" k8s/overlays/prd/kustomization.yaml
+          sed -i "s|newTag:.*|newTag: ${{ github.sha }}|" k8s/overlays/dev/kustomization.yaml
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add k8s/overlays/prd/kustomization.yaml k8s/overlays/dev/kustomization.yaml
+          git diff --staged --quiet || git commit -m "ci: update image tag to ${{ github.sha }}"
+          git push
+
+      - name: Dispatch deploy event to infrastructure repo
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.INFRA_DISPATCH_TOKEN }}
+          repository: ncx-ai/infrastructure
+          event-type: deploy-service
+          client-payload: '{"service": "cowsay", "sha": "${{ github.sha }}"}'
