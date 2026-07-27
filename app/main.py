@@ -1,17 +1,26 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse, PlainTextResponse
 
 from app.cowsay_util import render
-from app.db import check_db, close_pool, get_pool
-from app.models import HealthResponse, SayRequest
+from app.db import (
+    check_db,
+    close_pool,
+    ensure_schema,
+    get_message,
+    get_pool,
+    insert_message,
+    list_messages,
+)
+from app.models import HealthResponse, MessageListItem, MessageResponse, SayRequest
 from app.redis_client import check_redis, close_redis, get_redis, push_recent
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     get_pool()
+    ensure_schema()
     get_redis()
     yield
     close_pool()
@@ -57,3 +66,36 @@ def health() -> JSONResponse:
 def say(request: SayRequest) -> str:
     push_recent(request.say)
     return render(request.say)
+
+
+@app.post(
+    "/messages",
+    response_model=MessageResponse,
+    summary="Save a message",
+    description="Persists the said text to Postgres and pushes it onto the Redis recent list.",
+)
+def create_message(request: SayRequest) -> MessageResponse:
+    row = insert_message(request.say)
+    push_recent(request.say)
+    return MessageResponse(**row)
+
+
+@app.get(
+    "/messages",
+    response_model=list[MessageListItem],
+    summary="List saved messages",
+)
+def get_messages() -> list[MessageListItem]:
+    return [MessageListItem(**row) for row in list_messages()]
+
+
+@app.get(
+    "/messages/{message_id}/cowsay",
+    response_class=PlainTextResponse,
+    summary="Cowsay a saved message",
+)
+def cowsay_message(message_id: int) -> str:
+    row = get_message(message_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="message not found")
+    return render(row["say"])

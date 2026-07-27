@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -8,3 +10,14 @@ class HealthResponse(BaseModel):
 
 class SayRequest(BaseModel):
     say: str
+
+
+class MessageResponse(BaseModel):
+    id: int
+    say: str
+
+
+class MessageListItem(BaseModel):
+    id: int
+    say: str
+    created_at: datetime
