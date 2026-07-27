@@ -25,3 +25,13 @@ def check_redis() -> bool:
         return bool(get_redis().ping())
     except Exception:
         return False
+
+
+RECENT_KEY = "cowsay:recent"
+RECENT_MAX = 5
+
+
+def push_recent(text: str) -> None:
+    client = get_redis()
+    client.lpush(RECENT_KEY, text)
+    client.ltrim(RECENT_KEY, 0, RECENT_MAX - 1)

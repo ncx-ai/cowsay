@@ -1,11 +1,12 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 
+from app.cowsay_util import render
 from app.db import check_db, close_pool, get_pool
-from app.models import HealthResponse
-from app.redis_client import check_redis, close_redis, get_redis
+from app.models import HealthResponse, SayRequest
+from app.redis_client import check_redis, close_redis, get_redis, push_recent
 
 
 @asynccontextmanager
@@ -44,3 +45,15 @@ def health() -> JSONResponse:
     )
     status_code = 200 if (postgres_ok and redis_ok) else 503
     return JSONResponse(content=body.model_dump(), status_code=status_code)
+
+
+@app.post(
+    "/say",
+    response_class=PlainTextResponse,
+    summary="Say something",
+    description="Returns cowsay ASCII art for the given text. Ephemeral — "
+    "not persisted to Postgres, but pushed onto the Redis recent list.",
+)
+def say(request: SayRequest) -> str:
+    push_recent(request.say)
+    return render(request.say)
