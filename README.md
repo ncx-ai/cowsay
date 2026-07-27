@@ -10,7 +10,7 @@ sidecar tracking recently-said things.
 cp .env.example .env
 docker compose up -d postgres redis
 pip install -r requirements-dev.txt
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --env-file .env
 ```
 
 Interactive API docs: http://localhost:8000/docs
