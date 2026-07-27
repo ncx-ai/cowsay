@@ -35,3 +35,7 @@ def push_recent(text: str) -> None:
     client = get_redis()
     client.lpush(RECENT_KEY, text)
     client.ltrim(RECENT_KEY, 0, RECENT_MAX - 1)
+
+
+def get_recent() -> list[str]:
+    return get_redis().lrange(RECENT_KEY, 0, RECENT_MAX - 1)

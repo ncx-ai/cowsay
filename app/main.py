@@ -14,7 +14,7 @@ from app.db import (
     list_messages,
 )
 from app.models import HealthResponse, MessageListItem, MessageResponse, SayRequest
-from app.redis_client import check_redis, close_redis, get_redis, push_recent
+from app.redis_client import check_redis, close_redis, get_recent, get_redis, push_recent
 
 
 @asynccontextmanager
@@ -87,6 +87,16 @@ def create_message(request: SayRequest) -> MessageResponse:
 )
 def get_messages() -> list[MessageListItem]:
     return [MessageListItem(**row) for row in list_messages()]
+
+
+@app.get(
+    "/recent",
+    response_model=list[str],
+    summary="Recently said things",
+    description="Returns the 5 most recent things said via /say or /messages.",
+)
+def recent() -> list[str]:
+    return get_recent()
 
 
 @app.get(
