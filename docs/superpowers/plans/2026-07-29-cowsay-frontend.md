@@ -36,13 +36,12 @@ Add to `tests/test_messages.py`:
 
 ```python
 def test_create_message_dedups_exact_match(client):
+    # A second insert would receive a new SERIAL id, so an identical id proves
+    # the existing row was reused. Deliberately does NOT read GET /messages —
+    # that response shape changes in Task 2.
     first = client.post("/messages", json={"say": "dedup-marker-xyz"}).json()
     second = client.post("/messages", json={"say": "dedup-marker-xyz"}).json()
     assert first["id"] == second["id"]
-
-    listing = client.get("/messages", params={"limit": 100, "offset": 0}).json()
-    matching = [m for m in listing["items"] if m["say"] == "dedup-marker-xyz"]
-    assert len(matching) == 1
 
 
 def test_create_message_returns_cowsay_art(client):
@@ -68,7 +67,7 @@ def test_create_and_list_messages(client):
 - [ ] **Step 2: Run tests to verify they fail**
 
 Run: `docker compose up -d postgres redis && pytest tests/test_messages.py -v`
-Expected: `test_create_message_dedups_exact_match` and `test_create_message_returns_cowsay_art` FAIL (dedup not implemented, no `cowsay` key in response). `test_create_and_list_messages` FAILs on the `assert "^__^" in created["cowsay"]` line with a `KeyError`/`TypeError`.
+Expected: `test_create_message_dedups_exact_match` FAILS (two inserts → two different ids) and `test_create_message_returns_cowsay_art` FAILS (`KeyError: 'cowsay'`). `test_create_and_list_messages` FAILs on the `assert "^__^" in created["cowsay"]` line.
 
 - [ ] **Step 3: Implement `get_or_create_message` in `app/db.py`**
 
@@ -191,16 +190,28 @@ Add to `tests/test_messages.py`:
 
 ```python
 def test_messages_pagination_shape_and_bounds(client):
+    # Unique per run: POST /messages dedups on exact match (Task 1), so fixed
+    # text would insert nothing on a re-run and make ordering assertions flaky.
+    import uuid
+
+    run = uuid.uuid4().hex[:8]
     for i in range(3):
-        client.post("/messages", json={"say": f"page-marker-{i}"})
+        client.post("/messages", json={"say": f"page-marker-{run}-{i}"})
 
     page = client.get("/messages", params={"limit": 2, "offset": 0}).json()
     assert len(page["items"]) == 2
     assert page["limit"] == 2
     assert page["offset"] == 0
     assert page["total"] >= 3
-    # newest-first: the message just created is on the first page
-    assert "page-marker-2" in [m["say"] for m in page["items"]]
+
+    # newest-first: the two most recent inserts are this run's -2 and -1
+    says = [m["say"] for m in page["items"]]
+    assert says == [f"page-marker-{run}-2", f"page-marker-{run}-1"]
+
+    # and the second page continues the descending sequence
+    page2 = client.get("/messages", params={"limit": 2, "offset": 2}).json()
+    assert page2["offset"] == 2
+    assert page2["items"][0]["say"] == f"page-marker-{run}-0"
 
 
 def test_messages_default_pagination(client):
