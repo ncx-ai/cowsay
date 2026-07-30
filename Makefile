@@ -8,15 +8,17 @@ PY   := $(shell [ -x .venv/bin/python ] && echo .venv/bin/python || echo python3
 LOG  := /tmp/cowsay-uvicorn-$(PORT).log
 OPEN := $(shell command -v open >/dev/null 2>&1 && echo open || echo xdg-open)
 
-.PHONY: help ui dev
+.PHONY: help ui dev up down
 
 # Default target
 help:
 	@echo "Available commands:"
-	@echo "  make ui    - Open the web UI (starts the server first if it isn't running)"
-	@echo "  make dev   - Run the server in the foreground with reload"
+	@echo "  make up    - Build and start the whole stack in Docker, then open the UI"
+	@echo "  make down  - Stop the Docker stack"
+	@echo "  make ui    - Open the web UI (starts a local server if it isn't running)"
+	@echo "  make dev   - Run a local server in the foreground with reload"
 	@echo ""
-	@echo "Override host/port:  make ui PORT=8100"
+	@echo "Override host/port:  make up PORT=8100"
 
 # Open the web UI, starting the server first if needed.
 ui:
@@ -45,6 +47,32 @@ ui:
 	fi
 	@echo "opening $(URL)"
 	@$(OPEN) $(URL)
+
+# Build and start postgres, redis and the app in Docker, then open the UI.
+up:
+	@if lsof -nP -iTCP:$(PORT) -sTCP:LISTEN >/dev/null 2>&1; then \
+		echo "ERROR: port $(PORT) is already in use:"; \
+		lsof -nP -iTCP:$(PORT) -sTCP:LISTEN | tail -n +2 | awk '{print "  " $$1, "(pid " $$2 ")"}'; \
+		echo "Try a different port:  make up PORT=8100"; \
+		exit 1; \
+	fi
+	APP_PORT=$(PORT) docker compose up -d --build --remove-orphans
+	@echo "waiting for the app to become ready..."
+	@for i in $$(seq 1 60); do \
+		curl -s --max-time 1 $(ROOT) 2>/dev/null | grep -q '"status":"alive"' && break; \
+		sleep 1; \
+	done
+	@curl -s --max-time 2 $(ROOT) 2>/dev/null | grep -q '"status":"alive"' || { \
+		echo "ERROR: app did not become ready. Recent logs:"; \
+		docker compose logs --tail 20 app; \
+		exit 1; \
+	}
+	@echo "stack up — $(URL)"
+	@$(OPEN) $(URL)
+
+# Stop the Docker stack.
+down:
+	docker compose down --remove-orphans
 
 # Run the server in the foreground with auto-reload.
 dev:
