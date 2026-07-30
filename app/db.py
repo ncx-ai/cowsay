@@ -62,6 +62,8 @@ def get_message_by_body(body: str) -> dict | None:
 
 
 def get_or_create_message(body: str) -> dict:
+    # Not race-safe: concurrent identical POSTs can both
+    # insert. Acceptable here — single replica, toy service.
     existing = get_message_by_body(body)
     if existing is not None:
         return existing
