@@ -7,13 +7,14 @@ from app.cowsay_util import render
 from app.db import (
     check_db,
     close_pool,
+    count_messages,
     ensure_schema,
     get_message,
     get_or_create_message,
     get_pool,
     list_messages,
 )
-from app.models import HealthResponse, MessageListItem, MessageResponse, SayRequest
+from app.models import HealthResponse, MessageListItem, MessagePage, MessageResponse, SayRequest
 from app.redis_client import check_redis, close_redis, get_recent, get_redis, push_recent
 
 
@@ -84,11 +85,20 @@ def create_message(request: SayRequest) -> MessageResponse:
 
 @app.get(
     "/messages",
-    response_model=list[MessageListItem],
+    response_model=MessagePage,
     summary="List saved messages",
+    description="Paginated, newest-first. `limit` defaults to 10 and caps at 100.",
 )
-def get_messages() -> list[MessageListItem]:
-    return [MessageListItem(**row) for row in list_messages()]
+def get_messages(limit: int = 10, offset: int = 0) -> MessagePage:
+    limit = max(1, min(limit, 100))
+    offset = max(0, offset)
+    rows = list_messages(limit=limit, offset=offset)
+    return MessagePage(
+        items=[MessageListItem(**row) for row in rows],
+        total=count_messages(),
+        limit=limit,
+        offset=offset,
+    )
 
 
 @app.get(

@@ -22,3 +22,10 @@ class MessageListItem(BaseModel):
     id: int
     say: str
     created_at: datetime
+
+
+class MessagePage(BaseModel):
+    items: list[MessageListItem]
+    total: int
+    limit: int
+    offset: int

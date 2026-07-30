@@ -70,12 +70,20 @@ def get_or_create_message(body: str) -> dict:
     return insert_message(body)
 
 
-def list_messages() -> list[dict]:
+def list_messages(limit: int, offset: int) -> list[dict]:
     with get_pool().connection() as conn:
         rows = conn.execute(
-            "SELECT id, body, created_at FROM messages ORDER BY id"
+            "SELECT id, body, created_at FROM messages "
+            "ORDER BY id DESC LIMIT %s OFFSET %s",
+            (limit, offset),
         ).fetchall()
         return [{"id": r[0], "say": r[1], "created_at": r[2]} for r in rows]
+
+
+def count_messages() -> int:
+    with get_pool().connection() as conn:
+        row = conn.execute("SELECT COUNT(*) FROM messages").fetchone()
+        return row[0]
 
 
 def get_message(message_id: int) -> dict | None:
