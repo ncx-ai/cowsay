@@ -51,6 +51,23 @@ def insert_message(body: str) -> dict:
         return {"id": row[0], "say": row[1]}
 
 
+def get_message_by_body(body: str) -> dict | None:
+    with get_pool().connection() as conn:
+        row = conn.execute(
+            "SELECT id, body FROM messages WHERE body = %s LIMIT 1", (body,)
+        ).fetchone()
+        if row is None:
+            return None
+        return {"id": row[0], "say": row[1]}
+
+
+def get_or_create_message(body: str) -> dict:
+    existing = get_message_by_body(body)
+    if existing is not None:
+        return existing
+    return insert_message(body)
+
+
 def list_messages() -> list[dict]:
     with get_pool().connection() as conn:
         rows = conn.execute(

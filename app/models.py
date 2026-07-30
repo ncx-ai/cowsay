@@ -15,6 +15,7 @@ class SayRequest(BaseModel):
 class MessageResponse(BaseModel):
     id: int
     say: str
+    cowsay: str
 
 
 class MessageListItem(BaseModel):

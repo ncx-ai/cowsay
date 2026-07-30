@@ -9,8 +9,8 @@ from app.db import (
     close_pool,
     ensure_schema,
     get_message,
+    get_or_create_message,
     get_pool,
-    insert_message,
     list_messages,
 )
 from app.models import HealthResponse, MessageListItem, MessageResponse, SayRequest
@@ -72,12 +72,14 @@ def say(request: SayRequest) -> str:
     "/messages",
     response_model=MessageResponse,
     summary="Save a message",
-    description="Persists the said text to Postgres and pushes it onto the Redis recent list.",
+    description="Persists the said text to Postgres (reusing an exact-match row if "
+    "one exists), pushes it onto the Redis recent list, and returns the rendered "
+    "cowsay art.",
 )
 def create_message(request: SayRequest) -> MessageResponse:
-    row = insert_message(request.say)
+    row = get_or_create_message(request.say)
     push_recent(request.say)
-    return MessageResponse(**row)
+    return MessageResponse(id=row["id"], say=row["say"], cowsay=render(row["say"]))
 
 
 @app.get(
