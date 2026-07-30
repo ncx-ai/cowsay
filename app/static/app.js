@@ -114,6 +114,7 @@ sayForm.addEventListener("submit", async (event) => {
     output.textContent = created.cowsay;
     sayInput.value = "";
     await loadRecent();
+    await loadMessages(0);
   } catch (err) {
     showError("failed to say that — try again");
   } finally {
