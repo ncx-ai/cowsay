@@ -19,6 +19,11 @@ Interactive API docs: http://localhost:8000/docs
 
 A plain HTML/CSS/vanilla-JS frontend (no build step) is served at `/ui/`:
 
+```bash
+make ui              # starts the server if needed, then opens the browser
+make ui PORT=8100    # if port 8000 is already taken
+```
+
 - Locally: http://localhost:8000/ui/
 - In-cluster, via `kubectl port-forward svc/cowsay -n cowsay 8080:80`: http://localhost:8080/ui/
 
