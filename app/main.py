@@ -1,7 +1,9 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.cowsay_util import render
 from app.db import (
@@ -32,6 +34,9 @@ app = FastAPI(
     title="cowsay",
     description="Toy example service demonstrating a full dev-to-prod deployment pipeline.",
     lifespan=lifespan,
+)
+app.mount(
+    "/ui", StaticFiles(directory=str(Path(__file__).parent / "static"), html=True), name="ui"
 )
 
 

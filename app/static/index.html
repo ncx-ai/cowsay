@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cowsay</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>cowsay</h1>
+
+  <section id="say-panel">
+    <h2>Say something</h2>
+    <form id="say-form">
+      <input type="text" id="say-input" placeholder="What should the cow say?" required />
+      <button type="submit">Say</button>
+    </form>
+    <p id="say-error" class="error hidden"></p>
+    <pre id="output">Say something to see it here.</pre>
+  </section>
+
+  <section id="recent-panel">
+    <h2>Recently said</h2>
+    <ul id="recent-list"></ul>
+  </section>
+
+  <section id="messages-panel">
+    <h2>Saved messages</h2>
+    <table id="messages-table">
+      <thead>
+        <tr><th>ID</th><th>Text</th><th>Created</th></tr>
+      </thead>
+      <tbody id="messages-body"></tbody>
+    </table>
+    <div id="pagination">
+      <button id="prev-page" type="button">Prev</button>
+      <span id="page-indicator"></span>
+      <button id="next-page" type="button">Next</button>
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>
