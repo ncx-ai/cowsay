@@ -86,6 +86,7 @@ async function sayMessage(id) {
     if (!response.ok) throw new Error(`status ${response.status}`);
     const art = await response.text();
     output.textContent = art;
+    clearError();
     await loadRecent();
   } catch (err) {
     showError("couldn't say that message");
