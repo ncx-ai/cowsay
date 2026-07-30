@@ -115,9 +115,11 @@ def recent() -> list[str]:
     "/messages/{message_id}/cowsay",
     response_class=PlainTextResponse,
     summary="Cowsay a saved message",
+    description="Renders the saved message and pushes it onto the Redis recent list.",
 )
 def cowsay_message(message_id: int) -> str:
     row = get_message(message_id)
     if row is None:
         raise HTTPException(status_code=404, detail="message not found")
+    push_recent(row["say"])
     return render(row["say"])

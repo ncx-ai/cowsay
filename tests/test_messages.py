@@ -78,3 +78,14 @@ def test_messages_default_pagination(client):
 def test_messages_limit_is_capped(client):
     page = client.get("/messages", params={"limit": 1000}).json()
     assert page["limit"] == 100
+
+
+def test_cowsay_by_id_pushes_to_recent(client):
+    from app.redis_client import RECENT_KEY, get_redis
+
+    created = client.post("/messages", json={"say": "cowsay-recent-marker"}).json()
+    client.post("/messages", json={"say": "other-marker-noise"})
+
+    client.get(f"/messages/{created['id']}/cowsay")
+    recent = get_redis().lrange(RECENT_KEY, 0, 4)
+    assert recent[0] == "cowsay-recent-marker"
