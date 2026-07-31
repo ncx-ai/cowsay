@@ -1,19 +1,22 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.cowsay_util import render
 from app.db import (
     check_db,
     close_pool,
+    count_messages,
     ensure_schema,
     get_message,
+    get_or_create_message,
     get_pool,
-    insert_message,
     list_messages,
 )
-from app.models import HealthResponse, MessageListItem, MessageResponse, SayRequest
+from app.models import HealthResponse, MessageListItem, MessagePage, MessageResponse, SayRequest
 from app.redis_client import check_redis, close_redis, get_recent, get_redis, push_recent
 
 
@@ -31,6 +34,9 @@ app = FastAPI(
     title="cowsay",
     description="Toy example service demonstrating a full dev-to-prod deployment pipeline.",
     lifespan=lifespan,
+)
+app.mount(
+    "/ui", StaticFiles(directory=str(Path(__file__).parent / "static"), html=True), name="ui"
 )
 
 
@@ -72,21 +78,32 @@ def say(request: SayRequest) -> str:
     "/messages",
     response_model=MessageResponse,
     summary="Save a message",
-    description="Persists the said text to Postgres and pushes it onto the Redis recent list.",
+    description="Persists the said text to Postgres (reusing an exact-match row if "
+    "one exists), pushes it onto the Redis recent list, and returns the rendered "
+    "cowsay art.",
 )
 def create_message(request: SayRequest) -> MessageResponse:
-    row = insert_message(request.say)
+    row = get_or_create_message(request.say)
     push_recent(request.say)
-    return MessageResponse(**row)
+    return MessageResponse(id=row["id"], say=row["say"], cowsay=render(row["say"]))
 
 
 @app.get(
     "/messages",
-    response_model=list[MessageListItem],
+    response_model=MessagePage,
     summary="List saved messages",
+    description="Paginated, newest-first. `limit` defaults to 10 and caps at 100.",
 )
-def get_messages() -> list[MessageListItem]:
-    return [MessageListItem(**row) for row in list_messages()]
+def get_messages(limit: int = 10, offset: int = 0) -> MessagePage:
+    limit = max(1, min(limit, 100))
+    offset = max(0, offset)
+    rows = list_messages(limit=limit, offset=offset)
+    return MessagePage(
+        items=[MessageListItem(**row) for row in rows],
+        total=count_messages(),
+        limit=limit,
+        offset=offset,
+    )
 
 
 @app.get(
@@ -103,9 +120,11 @@ def recent() -> list[str]:
     "/messages/{message_id}/cowsay",
     response_class=PlainTextResponse,
     summary="Cowsay a saved message",
+    description="Renders the saved message and pushes it onto the Redis recent list.",
 )
 def cowsay_message(message_id: int) -> str:
     row = get_message(message_id)
     if row is None:
         raise HTTPException(status_code=404, detail="message not found")
+    push_recent(row["say"])
     return render(row["say"])

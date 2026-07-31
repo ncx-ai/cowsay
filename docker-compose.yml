@@ -26,7 +26,8 @@ services:
   app:
     build: .
     ports:
-      - "8000:8000"
+      # Host port is overridable so `make up PORT=8100` works when 8000 is taken.
+      - "${APP_PORT:-8000}:8000"
     environment:
       DATABASE_URL: postgresql://cowsay:cowsay@postgres:5432/cowsay
       REDIS_URL: redis://redis:6379/0

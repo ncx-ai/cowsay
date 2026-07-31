@@ -51,12 +51,39 @@ def insert_message(body: str) -> dict:
         return {"id": row[0], "say": row[1]}
 
 
-def list_messages() -> list[dict]:
+def get_message_by_body(body: str) -> dict | None:
+    with get_pool().connection() as conn:
+        row = conn.execute(
+            "SELECT id, body FROM messages WHERE body = %s LIMIT 1", (body,)
+        ).fetchone()
+        if row is None:
+            return None
+        return {"id": row[0], "say": row[1]}
+
+
+def get_or_create_message(body: str) -> dict:
+    # Not race-safe: concurrent identical POSTs can both
+    # insert. Acceptable here — single replica, toy service.
+    existing = get_message_by_body(body)
+    if existing is not None:
+        return existing
+    return insert_message(body)
+
+
+def list_messages(limit: int, offset: int) -> list[dict]:
     with get_pool().connection() as conn:
         rows = conn.execute(
-            "SELECT id, body, created_at FROM messages ORDER BY id"
+            "SELECT id, body, created_at FROM messages "
+            "ORDER BY id DESC LIMIT %s OFFSET %s",
+            (limit, offset),
         ).fetchall()
         return [{"id": r[0], "say": r[1], "created_at": r[2]} for r in rows]
+
+
+def count_messages() -> int:
+    with get_pool().connection() as conn:
+        row = conn.execute("SELECT COUNT(*) FROM messages").fetchone()
+        return row[0]
 
 
 def get_message(message_id: int) -> dict | None:
