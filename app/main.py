@@ -16,8 +16,20 @@ from app.db import (
     get_pool,
     list_messages,
 )
-from app.models import HealthResponse, MessageListItem, MessagePage, MessageResponse, SayRequest
-from app.redis_client import check_redis, close_redis, get_recent, get_redis, push_recent
+from app.models import (
+    HealthResponse,
+    MessageListItem,
+    MessagePage,
+    MessageResponse,
+    SayRequest,
+)
+from app.redis_client import (
+    check_redis,
+    close_redis,
+    get_recent,
+    get_redis,
+    push_recent,
+)
 
 
 @asynccontextmanager

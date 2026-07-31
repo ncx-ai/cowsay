@@ -23,7 +23,7 @@ def close_redis() -> None:
 def check_redis() -> bool:
     try:
         return bool(get_redis().ping())
-    except Exception:
+    except Exception:  # noqa: BLE001 -- any failure here means "unhealthy"
         return False
 
 

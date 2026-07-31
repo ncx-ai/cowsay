@@ -25,7 +25,7 @@ def check_db() -> bool:
         with get_pool().connection() as conn:
             conn.execute("SELECT 1")
         return True
-    except Exception:
+    except Exception:  # noqa: BLE001 -- any failure here means "unhealthy"
         return False
 
 
