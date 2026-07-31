@@ -8,4 +8,4 @@ images:
     # Replace YOUR_ARTIFACT_REGISTRY_URL with the real Artifact Registry URL
     # once (see ncx-ai/infrastructure's README) -- CI only ever updates newTag below.
     newName: us-east1-docker.pkg.dev/ncx-ai-prod/ncx/cowsay
-    newTag: 748fdec6b4aa4c498dd6bd21c2557b887cea01e2
+    newTag: d5aac507a3da4b19153d1f11517f6ca25f8d6a60
