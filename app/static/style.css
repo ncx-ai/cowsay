@@ -54,3 +54,29 @@ th, td {
   align-items: center;
   gap: 0.75rem;
 }
+
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+[data-theme="dark"] body {
+  background: #1a1a1a;
+  color: #eee;
+}
+
+[data-theme="dark"] section {
+  border-bottom-color: #444;
+}
+
+[data-theme="dark"] #output {
+  background: #2a2a2a;
+}
+
+[data-theme="dark"] th,
+[data-theme="dark"] td {
+  border-bottom-color: #333;
+}
+
+[data-theme="dark"] .message-row:hover {
+  background: #2a2a2a;
+}

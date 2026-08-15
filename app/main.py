@@ -1,8 +1,9 @@
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.cowsay_util import render
@@ -47,6 +48,16 @@ app = FastAPI(
     description="Toy example service demonstrating a full dev-to-prod deployment pipeline.",
     lifespan=lifespan,
 )
+@app.get("/ui/", include_in_schema=False)
+def ui_index() -> HTMLResponse:
+    ui_mode = os.environ.get("UI_MODE", "light")
+    if ui_mode not in ("light", "dark"):
+        ui_mode = "light"
+    html = (Path(__file__).parent / "static" / "index.html").read_text()
+    html = html.replace('<html lang="en">', f'<html lang="en" data-theme="{ui_mode}">')
+    return HTMLResponse(content=html)
+
+
 app.mount(
     "/ui", StaticFiles(directory=str(Path(__file__).parent / "static"), html=True), name="ui"
 )
