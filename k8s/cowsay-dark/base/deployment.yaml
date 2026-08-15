@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cowsay-dark
+  labels:
+    app: cowsay-dark
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cowsay-dark
+  template:
+    metadata:
+      labels:
+        app: cowsay-dark
+    spec:
+      containers:
+        - name: cowsay
+          image: cowsay
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: cowsay-secrets
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              value: redis://localhost:6379/0
+            - name: UI_MODE
+              value: dark
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi

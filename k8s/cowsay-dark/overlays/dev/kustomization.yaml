@@ -1,0 +1,25 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+namespace: cowsay
+images:
+  - name: cowsay
+    # Replace YOUR_ARTIFACT_REGISTRY_URL with the real Artifact Registry URL
+    # once (see ncx-ai/infrastructure's README) -- CI only ever updates newTag below.
+    newName: us-east1-docker.pkg.dev/ncx-ai-prod/ncx/cowsay
+    newTag: 91ac615fe92c11fe2a9660ed2efeb08e95581fd6
+patches:
+  - target:
+      kind: Deployment
+      name: cowsay-dark
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
