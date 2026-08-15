@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+# Shared cert-manager/GKE annotation boilerplate, applied onto whatever Ingress
+# object the consuming kustomization already defines. This is the one piece of
+# genuine cross-app duplication (see
+# docs/superpowers/specs/2026-08-14-multi-app-argocd-project-design.md in
+# ncx-ai/infrastructure) -- everything else about an Ingress (hostname, TLS secret
+# name, backend service) stays in each app's own ingress.yaml, since those are
+# inherently custom per app, not boilerplate.
+patches:
+  - target:
+      kind: Ingress
+    patch: |-
+      - op: add
+        path: /metadata/annotations
+        value:
+          cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+          kubernetes.io/ingress.class: gce
