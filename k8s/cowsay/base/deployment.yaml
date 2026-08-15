@@ -27,6 +27,8 @@ spec:
                   key: DATABASE_URL
             - name: REDIS_URL
               value: redis://localhost:6379/0
+            - name: UI_MODE
+              value: light
           readinessProbe:
             httpGet:
               path: /health
