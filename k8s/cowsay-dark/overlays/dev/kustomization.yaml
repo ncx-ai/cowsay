@@ -6,7 +6,9 @@ namespace: cowsay
 images:
   - name: cowsay
     # Replace YOUR_ARTIFACT_REGISTRY_URL with the real Artifact Registry URL
-    # once (see ncx-ai/infrastructure's README) -- CI only ever updates newTag below.
+    # once (see ncx-ai/infrastructure's README).
+    # Pinned manually -- ci.yml does NOT update this app's tag (it only touches
+    # k8s/cowsay/overlays/*). Bump by hand to move cowsay-dark onto a newer image.
     newName: us-east1-docker.pkg.dev/ncx-ai-prod/ncx/cowsay
     newTag: d1e4be22b2061c177d88599066178ee2442346cf
 patches:
