@@ -76,11 +76,11 @@ jobs:
 
       - name: Update kustomization image tags
         run: |
-          sed -i "s|newTag:.*|newTag: ${{ github.sha }}|" k8s/cowsay/overlays/prd/kustomization.yaml
-          sed -i "s|newTag:.*|newTag: ${{ github.sha }}|" k8s/cowsay/overlays/dev/kustomization.yaml
+          sed -i "s|newTag:.*|newTag: ${{ github.sha }}|" k8s/api/overlays/prd/kustomization.yaml
+          sed -i "s|newTag:.*|newTag: ${{ github.sha }}|" k8s/api/overlays/dev/kustomization.yaml
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          git add k8s/cowsay/overlays/prd/kustomization.yaml k8s/cowsay/overlays/dev/kustomization.yaml
+          git add k8s/api/overlays/prd/kustomization.yaml k8s/api/overlays/dev/kustomization.yaml
           git diff --staged --quiet || git commit -m "ci: update image tag to ${{ github.sha }}"
           git push
 

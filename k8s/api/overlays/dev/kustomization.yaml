@@ -15,7 +15,7 @@ images:
 patches:
   - target:
       kind: Deployment
-      name: cowsay
+      name: api-deployment
     patch: |-
       - op: replace
         path: /spec/template/spec/containers/0/resources

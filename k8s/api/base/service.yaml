@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: cowsay-dark
+  name: api-service
 spec:
   selector:
-    app: cowsay-dark
+    app: api
   ports:
     - port: 80
       targetPort: 8000

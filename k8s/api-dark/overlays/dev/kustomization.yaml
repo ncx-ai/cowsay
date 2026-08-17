@@ -14,7 +14,7 @@ images:
 patches:
   - target:
       kind: Deployment
-      name: cowsay-dark
+      name: api-dark-deployment
     patch: |-
       - op: replace
         path: /spec/template/spec/containers/0/resources

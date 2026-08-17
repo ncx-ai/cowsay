@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cowsay-dark
+  name: api-deployment
   labels:
-    app: cowsay-dark
+    app: api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: cowsay-dark
+      app: api
   template:
     metadata:
       labels:
-        app: cowsay-dark
+        app: api
     spec:
       containers:
         - name: cowsay
@@ -28,7 +28,7 @@ spec:
             - name: REDIS_URL
               value: redis://localhost:6379/0
             - name: UI_MODE
-              value: dark
+              value: light
           readinessProbe:
             httpGet:
               path: /health
