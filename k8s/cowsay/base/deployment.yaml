@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cowsay
+  name: api-deployment
   labels:
-    app: cowsay
+    app: api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: cowsay
+      app: api
   template:
     metadata:
       labels:
-        app: cowsay
+        app: api
     spec:
       containers:
         - name: cowsay

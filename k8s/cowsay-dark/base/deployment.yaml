@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cowsay-dark
+  name: api-dark-deployment
   labels:
-    app: cowsay-dark
+    app: api-dark
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: cowsay-dark
+      app: api-dark
   template:
     metadata:
       labels:
-        app: cowsay-dark
+        app: api-dark
     spec:
       containers:
         - name: cowsay
