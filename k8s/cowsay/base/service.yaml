@@ -2,6 +2,19 @@ apiVersion: v1
 kind: Service
 metadata:
   name: cowsay
+  annotations:
+    # Binds this Service's GCLB backend to the cowsay-cloudflare-only Cloud
+    # Armor policy, which denies everything that is not a Cloudflare edge
+    # range. Without it the origin load balancer IP answers directly and the
+    # Cloudflare Access application in front of this hostname is bypassable --
+    # measured returning 200 on both stacks before this landed, see
+    # ncx-ai/infrastructure#267.
+    #
+    # The policy and the BackendConfig this names are created by pulumi in
+    # ncx-ai/infrastructure (__main__.py's cowsay block), NOT here, and must
+    # exist before this annotation is applied. One BackendConfig serves both
+    # cowsay and cowsay-dark.
+    cloud.google.com/backend-config: '{"default": "cowsay-cloudflare-only"}'
 spec:
   selector:
     app: cowsay
