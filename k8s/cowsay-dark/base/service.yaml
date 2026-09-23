@@ -20,6 +20,27 @@ metadata:
     # exist before this annotation is applied. One BackendConfig serves both
     # cowsay and cowsay-dark.
     cloud.google.com/backend-config: '{"default": "cowsay-cloudflare-only"}'
+    # Container-native load balancing. Without it the GKE ingress controller
+    # refuses to build a backend for a ClusterIP Service and the Ingress never
+    # gets an address:
+    #
+    #   Translation failed: invalid ingress spec: service
+    #   "cowsay/cowsay-dark" is type "ClusterIP", expected "NodePort" or
+    #   "LoadBalancer" when not using NEGs
+    #
+    # GKE's NEG controller usually adds this itself when an Ingress references a
+    # ClusterIP Service on a VPC-native cluster, but not reliably -- measured
+    # here: cowsay-dark's first prod sync (2026-09-23) sat retrying that exact
+    # translation error for 32+ minutes with a healthy cert and healthy pods,
+    # never getting an address, until this annotation was added by hand.
+    # ncx-ai/api-gateway hit the identical failure on 2026-09-13 (see that
+    # repo's k8s/api-gateway/base/service.yaml) and fixed it the same way.
+    #
+    # Declared rather than inherited, same reasoning as api-gateway's: every
+    # other Service behind a prod Ingress in this estate should carry this
+    # explicitly rather than depend on controller behaviour that is only
+    # observable when it fails.
+    cloud.google.com/neg: '{"ingress": true}'
 spec:
   selector:
     app: cowsay-dark
