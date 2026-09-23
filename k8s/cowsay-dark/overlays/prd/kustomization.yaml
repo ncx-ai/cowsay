@@ -13,18 +13,4 @@ images:
     # Pinned manually -- ci.yml does NOT update this app's tag (it only touches
     # k8s/cowsay/overlays/*). Bump by hand to move cowsay-dark onto a newer image.
     newName: us-east1-docker.pkg.dev/ncx-ai-prod/ncx/cowsay
-    newTag: d1e4be22b2061c177d88599066178ee2442346cf
-patches:
-  - target:
-      kind: Deployment
-      name: cowsay-dark
-    patch: |-
-      - op: replace
-        path: /spec/template/spec/containers/0/resources
-        value:
-          requests:
-            cpu: 50m
-            memory: 64Mi
-          limits:
-            cpu: 100m
-            memory: 128Mi
+    newTag: 5d3ddc63ef19b33bc52c7ea46bb20e39de3d952e
